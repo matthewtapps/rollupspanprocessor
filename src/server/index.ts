@@ -1,11 +1,17 @@
+// import { diag, DiagConsoleLogger, DiagLogLevel } from "@opentelemetry/api";
+//
+// diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.DEBUG);
+
 import {
   rollupProcessor,
   setRollupEnabled,
-} from "../telemetry/instrumentation.js";
+  setHoneycombApiKey,
+  hasEnvApiKey,
+} from "../telemetry/instrumentation";
 
 import express from "express";
 import cors from "cors";
-import { dbClient, queries } from "./database.js";
+import { dbClient, queries } from "./database";
 
 const app = express();
 app.use(cors());
@@ -13,13 +19,37 @@ app.use(express.json());
 
 app.get("/api/status", (_req, res) => {
   res.json({
-    configured: true,
+    hasEnvApiKey,
     rollupEnabled: rollupProcessor?.enabled ?? true,
   });
+
+  console.log(
+    `Received request to /api/status, hasEnvApiKey: ${hasEnvApiKey}, rollupEnabled: ${rollupProcessor.enabled}`,
+  );
 });
 
 app.post("/api/generate", async (req, res) => {
-  const { numQueries, queryDurationMs, enableRollup = true } = req.body;
+  const {
+    numQueries,
+    queryDurationMs,
+    enableRollup = true,
+    honeycombApiKey,
+  } = req.body;
+
+  console.log(
+    `Received request to /api/generate, numQueries: ${numQueries}, queryDurationMs: ${queryDurationMs}, enableRollup: ${enableRollup}, honeycombApiKey: ${honeycombApiKey}`,
+  );
+
+  if (!hasEnvApiKey && !honeycombApiKey) {
+    return res.status(400).json({
+      error:
+        "No Honeycomb API key configured. Please provide one in the request or set HONEYCOMB_API_KEY environment variable.",
+    });
+  }
+
+  if (honeycombApiKey && typeof honeycombApiKey === "string") {
+    setHoneycombApiKey(honeycombApiKey);
+  }
 
   setRollupEnabled(enableRollup);
 

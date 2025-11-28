@@ -1,23 +1,40 @@
 services:
-  app:
+  frontend:
     build: .
+    command: sh -c "pnpm install && pnpm run dev"
     ports:
       - "5173:5173"
+    volumes:
+      - .:/app:z
+      - node_modules:/app/node_modules
+      - pnpm_store:/app/.pnpm-store
+    environment:
+      - NODE_ENV=development
+    networks:
+      - network
+    tty: true
+    stdin_open: true
+
+  backend:
+    build: .
+    command: sh -c "pnpm install && node --import tsx src/server/index.ts"
+    ports:
       - "3001:3001"
     volumes:
       - .:/app:z
-      - ./node_modules:/app/node_modules
-      - ./.pnpm-store:/app/.pnpm-store
+      - node_modules:/app/node_modules
+      - pnpm_store:/app/.pnpm-store
     environment:
       - HONEYCOMB_API_KEY=${HONEYCOMB_API_KEY:-}
       - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/testdb
-    tty: true
-    stdin_open: true
+      - NODE_ENV=development
     depends_on:
       postgres:
         condition: service_healthy
     networks:
       - network
+    tty: true
+    stdin_open: true
 
   postgres:
     image: postgres:17-alpine
@@ -27,7 +44,7 @@ services:
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U fjam -d fjam_dev -h 127.0.0.1"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d testdb"]
       interval: 2s
       timeout: 3s
       retries: 40
@@ -38,6 +55,8 @@ services:
 
 volumes:
   postgres-data:
+  node_modules:
+  pnpm_store:
 
 networks:
   network:
