@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "server": "node --experimental-sqlite --import tsx src/server/index.ts",
+    "build:server": "tsc --outDir dist",
+    "server": "node --import tsx src/server/index.ts",
+    "server:compiled": "node dist/server/index.js",
     "lint": "eslint .",
     "preview": "vite preview"
   },
