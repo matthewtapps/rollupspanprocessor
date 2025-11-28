@@ -1,6 +1,6 @@
 # Rollup Span Processor
 
-A React + TypeScript application with Express backend and PostgreSQL database, featuring OpenTelemetry instrumentation.
+A React + TypeScript application with Express backend and PostgreSQL database, featuring the Rollup Span Processor which summarises high-volume span data.
 
 ## Prerequisites
 
