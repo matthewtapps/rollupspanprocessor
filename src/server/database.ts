@@ -1,15 +1,17 @@
-import { newDb } from 'pg-mem';
-import type { Client } from 'pg';
+import { Client } from 'pg';
 
-function initializeDb(): Client {
-  const db = newDb();
-  
-  db.public.registerFunction({
-    name: 'current_database',
-    implementation: () => 'postgres',
+async function initializeDb(): Promise<Client> {
+  const client = new Client({
+    connectionString: process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/testdb'
   });
   
-  db.public.none(`
+  await client.connect();
+  
+  await client.query(`
+    DROP TABLE IF EXISTS comments;
+    DROP TABLE IF EXISTS posts;
+    DROP TABLE IF EXISTS users;
+    
     CREATE TABLE users (
       id SERIAL PRIMARY KEY,
       name TEXT NOT NULL,
@@ -65,11 +67,10 @@ function initializeDb(): Client {
       (6, 2, 'Comment 9'), (7, 4, 'Comment 10');
   `);
   
-  const { Client: PgMemClient } = db.adapters.createPg();
-  return new PgMemClient() as Client;
+  return client;
 }
 
-export const dbClient = initializeDb();
+export const dbClient = await initializeDb();
 
 export const queries = {
   selectUser: 'SELECT * FROM users WHERE id = $1',

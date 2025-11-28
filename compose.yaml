@@ -10,5 +10,34 @@ services:
       - ./.pnpm-store:/app/.pnpm-store
     environment:
       - HONEYCOMB_API_KEY=${HONEYCOMB_API_KEY:-}
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/testdb
     tty: true
     stdin_open: true
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - network
+
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: testdb
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fjam -d fjam_dev -h 127.0.0.1"]
+      interval: 2s
+      timeout: 3s
+      retries: 40
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - network
+
+volumes:
+  postgres-data:
+
+networks:
+  network:

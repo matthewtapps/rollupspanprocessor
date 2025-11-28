@@ -1,9 +1,6 @@
 import { useEffect, useState } from "react";
 
 export default function App() {
-  const [apiKey, setApiKey] = useState(
-    "",
-  );
   const [enableRollup, setEnableRollup] = useState(true);
   const [configured, setConfigured] = useState(false);
   const [numQueries, setNumQueries] = useState(100);
@@ -23,26 +20,6 @@ export default function App() {
       .catch(() => {
       });
   }, []);
-
-  const handleConfigure = async () => {
-    try {
-      const response = await fetch("http://localhost:3001/api/config", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ honeycombApiKey: apiKey }),
-      });
-
-      if (response.ok) {
-        setConfigured(true);
-        setMessage("Configuration saved!");
-      } else {
-        const data = await response.json();
-        setMessage(data.error || "Failed to configure");
-      }
-    } catch (error) {
-      setMessage("Error: " + error);
-    }
-  };
 
   const handleGenerate = async () => {
     setGenerating(true);
@@ -77,32 +54,6 @@ export default function App() {
   return (
     <div style={{ padding: "2rem", maxWidth: "600px", margin: "0 auto" }}>
       <h1>Span Rollup Demo</h1>
-
-      <div style={{ marginBottom: "2rem" }}>
-        <h2>Configuration</h2>
-        <div style={{ marginBottom: "1rem" }}>
-          <label style={{ display: "block", marginBottom: "0.5rem" }}>
-            Honeycomb API Key:
-          </label>
-          <input
-            type="password"
-            value={apiKey}
-            onChange={(e) => setApiKey(e.target.value)}
-            placeholder="Enter your API key"
-            style={{ width: "100%", padding: "0.5rem" }}
-          />
-        </div>
-
-        <button onClick={handleConfigure} style={{ padding: "0.5rem 1rem" }}>
-          Set API key
-        </button>
-
-        {configured && (
-          <span style={{ marginLeft: "1rem", color: "green" }}>
-            ✓ Configured
-          </span>
-        )}
-      </div>
 
       <div style={{ marginBottom: "2rem" }}>
         <h2>Generate Telemetry</h2>
