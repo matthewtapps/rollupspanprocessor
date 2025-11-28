@@ -1,12 +1,19 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Loader2 } from "lucide-react";
 
 export default function App() {
-  const [enableRollup, setEnableRollup] = useState(true);
   const [configured, setConfigured] = useState(false);
   const [numQueries, setNumQueries] = useState(100);
   const [queryDuration, setQueryDuration] = useState(10);
-  const [generating, setGenerating] = useState(false);
+  const [enableRollup, setEnableRollup] = useState(true);
   const [message, setMessage] = useState("");
+  const [generating, setGenerating] = useState(false);
 
   useEffect(() => {
     fetch("http://localhost:3001/api/status")
@@ -17,14 +24,12 @@ export default function App() {
           setMessage("Using API key from environment");
         }
       })
-      .catch(() => {
-      });
+      .catch(() => {});
   }, []);
 
   const handleGenerate = async () => {
     setGenerating(true);
     setMessage("");
-
     try {
       const response = await fetch("http://localhost:3001/api/generate", {
         method: "POST",
@@ -35,7 +40,6 @@ export default function App() {
           enableRollup,
         }),
       });
-
       const data = await response.json();
       if (response.ok) {
         setMessage(
@@ -52,72 +56,75 @@ export default function App() {
   };
 
   return (
-    <div style={{ padding: "2rem", maxWidth: "600px", margin: "0 auto" }}>
-      <h1>Span Rollup Demo</h1>
-
-      <div style={{ marginBottom: "2rem" }}>
-        <h2>Generate Telemetry</h2>
-
-        <div style={{ marginBottom: "1rem" }}>
-          <label style={{ display: "block", marginBottom: "0.5rem" }}>
-            Number of SQL Queries:
-          </label>
-          <input
-            type="number"
-            value={numQueries}
-            onChange={(e) => setNumQueries(parseInt(e.target.value))}
-            min="1"
-            max="1000"
-            style={{ width: "100%", padding: "0.5rem" }}
-          />
+    <div className="min-h-screen bg-background p-8">
+      <div className="max-w-2xl mx-auto space-y-8">
+        <div className="space-y-2">
+          <h1 className="text-4xl font-bold tracking-tight">Span Rollup Demo</h1>
+          <p className="text-muted-foreground">
+            Generate telemetry traces with SQL query rollup processing
+          </p>
         </div>
 
-        <div style={{ marginBottom: "1rem" }}>
-          <label style={{ display: "block", marginBottom: "0.5rem" }}>
-            Query Duration (ms):
-          </label>
-          <input
-            type="number"
-            value={queryDuration}
-            onChange={(e) => setQueryDuration(parseInt(e.target.value))}
-            min="0"
-            defaultValue={10}
-            max="1000"
-            style={{ width: "100%", padding: "0.5rem" }}
-          />
-        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Generate Telemetry</CardTitle>
+            <CardDescription>
+              Configure and generate OpenTelemetry traces with SQL spans
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="numQueries">Number of SQL Queries</Label>
+              <Input
+                id="numQueries"
+                type="number"
+                value={numQueries}
+                onChange={(e) => setNumQueries(parseInt(e.target.value))}
+                min="1"
+                max="1000"
+              />
+            </div>
 
-        <div style={{ marginBottom: "1rem" }}>
-          <label>
-            <input
-              type="checkbox"
-              checked={enableRollup}
-              onChange={(e) => setEnableRollup(e.target.checked)}
-            />{" "}
-            Enable Rollup Processor
-          </label>
-        </div>
+            <div className="space-y-2">
+              <Label htmlFor="queryDuration">Query Duration (ms)</Label>
+              <Input
+                id="queryDuration"
+                type="number"
+                value={queryDuration}
+                onChange={(e) => setQueryDuration(parseInt(e.target.value))}
+                min="0"
+                max="1000"
+              />
+            </div>
 
-        <button
-          onClick={handleGenerate}
-          disabled={!configured || generating}
-          style={{ padding: "0.5rem 1rem" }}
-        >
-          {generating ? "Generating..." : "Generate Trace"}
-        </button>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="enableRollup"
+                checked={enableRollup}
+                onCheckedChange={(checked) => setEnableRollup(checked as boolean)}
+              />
+              <Label htmlFor="enableRollup" className="cursor-pointer">
+                Enable Rollup Processor
+              </Label>
+            </div>
+
+            <Button
+              onClick={handleGenerate}
+              disabled={!configured || generating}
+              className="w-full"
+            >
+              {generating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {generating ? "Generating..." : "Generate Trace"}
+            </Button>
+          </CardContent>
+        </Card>
+
+        {message && (
+          <Alert variant={message.includes("Error") ? "destructive" : "default"}>
+            <AlertDescription>{message}</AlertDescription>
+          </Alert>
+        )}
       </div>
-
-      {message && (
-        <div
-          style={{
-            padding: "1rem",
-            background: message.includes("Error") ? "#fee" : "#efe",
-            borderRadius: "4px",
-          }}
-        >
-          {message}
-        </div>
-      )}
     </div>
   );
 }
