@@ -5,7 +5,7 @@ A React + TypeScript application with Express backend and PostgreSQL database, f
 ## Prerequisites
 
 - `make`
-- `podman` and `podman-compose` (or `docker-compose`)
+- `podman` and `podman-compose` (or `docker compose`)
 - A [Honeycomb](https://ui.honeycomb.io/login) account (free tier is fine)
 - A Honeycomb API key for that account
 
