@@ -1,93 +1,80 @@
-import { DatabaseSync } from 'node:sqlite';
+import { newDb } from 'pg-mem';
+import type { Client } from 'pg';
 
-interface User {
-  id: number;
-  name: string;
-  email: string;
-  created_at: string;
-}
-
-interface Post {
-  id: number;
-  user_id: number;
-  title: string;
-  content: string | null;
-  created_at: string;
-}
-
-interface Comment {
-  id: number;
-  post_id: number;
-  user_id: number;
-  content: string;
-  created_at: string;
-}
-
-export type QueryResult = User | Post | Comment;
-
-export function createInMemoryDb(): DatabaseSync {
-  const db = new DatabaseSync(':memory:');
+function initializeDb(): Client {
+  const db = newDb();
   
-  db.exec(`
+  db.public.registerFunction({
+    name: 'current_database',
+    implementation: () => 'postgres',
+  });
+  
+  db.public.none(`
     CREATE TABLE users (
-      id INTEGER PRIMARY KEY,
+      id SERIAL PRIMARY KEY,
       name TEXT NOT NULL,
       email TEXT NOT NULL,
-      created_at TEXT DEFAULT CURRENT_TIMESTAMP
-    ) STRICT;
+      created_at TIMESTAMP DEFAULT NOW()
+    );
     
     CREATE TABLE posts (
-      id INTEGER PRIMARY KEY,
+      id SERIAL PRIMARY KEY,
       user_id INTEGER NOT NULL,
       title TEXT NOT NULL,
       content TEXT,
-      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (user_id) REFERENCES users(id)
-    ) STRICT;
+      created_at TIMESTAMP DEFAULT NOW()
+    );
     
     CREATE TABLE comments (
-      id INTEGER PRIMARY KEY,
+      id SERIAL PRIMARY KEY,
       post_id INTEGER NOT NULL,
       user_id INTEGER NOT NULL,
       content TEXT NOT NULL,
-      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (post_id) REFERENCES posts(id),
-      FOREIGN KEY (user_id) REFERENCES users(id)
-    ) STRICT;
+      created_at TIMESTAMP DEFAULT NOW()
+    );
+    
+    INSERT INTO users (name, email) VALUES 
+      ('User 1', 'user1@example.com'),
+      ('User 2', 'user2@example.com'),
+      ('User 3', 'user3@example.com'),
+      ('User 4', 'user4@example.com'),
+      ('User 5', 'user5@example.com'),
+      ('User 6', 'user6@example.com'),
+      ('User 7', 'user7@example.com'),
+      ('User 8', 'user8@example.com'),
+      ('User 9', 'user9@example.com'),
+      ('User 10', 'user10@example.com');
+    
+    INSERT INTO posts (user_id, title, content) VALUES 
+      (1, 'Post 1', 'Content 1'),
+      (2, 'Post 2', 'Content 2'),
+      (3, 'Post 3', 'Content 3'),
+      (1, 'Post 4', 'Content 4'),
+      (2, 'Post 5', 'Content 5'),
+      (4, 'Post 6', 'Content 6'),
+      (5, 'Post 7', 'Content 7'),
+      (1, 'Post 8', 'Content 8'),
+      (3, 'Post 9', 'Content 9'),
+      (2, 'Post 10', 'Content 10');
+    
+    INSERT INTO comments (post_id, user_id, content) VALUES 
+      (1, 2, 'Comment 1'), (1, 3, 'Comment 2'),
+      (2, 1, 'Comment 3'), (2, 4, 'Comment 4'),
+      (3, 5, 'Comment 5'), (3, 2, 'Comment 6'),
+      (4, 3, 'Comment 7'), (5, 1, 'Comment 8'),
+      (6, 2, 'Comment 9'), (7, 4, 'Comment 10');
   `);
   
-  const insertUser = db.prepare('INSERT INTO users (name, email) VALUES (?, ?)');
-  const insertPost = db.prepare('INSERT INTO posts (user_id, title, content) VALUES (?, ?, ?)');
-  const insertComment = db.prepare('INSERT INTO comments (post_id, user_id, content) VALUES (?, ?, ?)');
-  
-  for (let i = 1; i <= 10; i++) {
-    insertUser.run(`User ${i}`, `user${i}@example.com`);
-  }
-  
-  for (let i = 1; i <= 20; i++) {
-    insertPost.run(
-      Math.floor(Math.random() * 10) + 1,
-      `Post Title ${i}`,
-      `This is the content for post ${i}`
-    );
-  }
-  
-  for (let i = 1; i <= 50; i++) {
-    insertComment.run(
-      Math.floor(Math.random() * 20) + 1,
-      Math.floor(Math.random() * 10) + 1,
-      `This is comment ${i}`
-    );
-  }
-  
-  return db;
+  const { Client: PgMemClient } = db.adapters.createPg();
+  return new PgMemClient() as Client;
 }
 
-export function executeQuery<T = QueryResult>(
-  db: DatabaseSync, 
-  query: string, 
-  params: (string | number)[] = []
-): T[] {
-  const stmt = db.prepare(query);
-  return params.length > 0 ? stmt.all(...params) as T[] : stmt.all() as T[];
-}
+export const dbClient = initializeDb();
+
+export const queries = {
+  selectUser: 'SELECT * FROM users WHERE id = $1',
+  selectPosts: 'SELECT * FROM posts WHERE user_id = $1',
+  selectComments: 'SELECT * FROM comments WHERE post_id = $1',
+  countUsers: 'SELECT COUNT(*) FROM users WHERE id > $1',
+  joinPostsComments: 'SELECT p.title, c.content FROM posts p JOIN comments c ON p.id = c.post_id WHERE p.user_id = $1',
+};

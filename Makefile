@@ -1,4 +1,4 @@
-.PHONY: up down clean shell logs deps
+.PHONY: up down clean shell logs deps install
 
 COMPOSE := podman compose
 
@@ -27,3 +27,6 @@ shell:
 
 logs:
 	$(COMPOSE) logs -f app
+
+install:
+	$(COMPOSE) run --rm app pnpm install $(PKG)

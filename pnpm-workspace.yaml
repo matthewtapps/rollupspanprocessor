@@ -1,1 +1,5 @@
+ignoredBuiltDependencies:
+  - esbuild
+  - protobufjs
+
 storeDir: ./.pnpm-store

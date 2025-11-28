@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function App() {
   const [apiKey, setApiKey] = useState(
@@ -10,6 +10,19 @@ export default function App() {
   const [queryDuration, setQueryDuration] = useState(10);
   const [generating, setGenerating] = useState(false);
   const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    fetch("http://localhost:3001/api/status")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.configured) {
+          setConfigured(true);
+          setMessage("Using API key from environment");
+        }
+      })
+      .catch(() => {
+      });
+  }, []);
 
   const handleConfigure = async () => {
     try {
@@ -23,7 +36,8 @@ export default function App() {
         setConfigured(true);
         setMessage("Configuration saved!");
       } else {
-        setMessage("Failed to configure");
+        const data = await response.json();
+        setMessage(data.error || "Failed to configure");
       }
     } catch (error) {
       setMessage("Error: " + error);

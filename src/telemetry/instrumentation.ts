@@ -4,11 +4,17 @@ import { NodeSDK } from "@opentelemetry/sdk-node";
 import { ATTR_SERVICE_NAME } from "@opentelemetry/semantic-conventions";
 import { BatchSpanProcessor } from "@opentelemetry/sdk-trace-base";
 import { resourceFromAttributes } from "@opentelemetry/resources";
-import { SqlRollupSpanProcessor } from "./sql-span-rollup-processor";
+import { SqlRollupSpanProcessor } from "./sql-span-rollup-processor.js";
 
-let rollupProcessor: SqlRollupSpanProcessor | null = null;
+export let rollupProcessor: SqlRollupSpanProcessor | null = null;
+let sdk: NodeSDK | null = null;
 
 export function initializeTelemetry(honeycombApiKey: string): void {
+  if (sdk) {
+    console.log("Telemetry already initialized");
+    return;
+  }
+
   const exporter = new OTLPTraceExporter({
     url: "https://api.honeycomb.io/v1/traces",
     headers: {
@@ -19,7 +25,7 @@ export function initializeTelemetry(honeycombApiKey: string): void {
   const batchProcessor = new BatchSpanProcessor(exporter);
   rollupProcessor = new SqlRollupSpanProcessor(batchProcessor);
 
-  const sdk = new NodeSDK({
+  sdk = new NodeSDK({
     serviceName: "rollup-processor-demo",
     resource: resourceFromAttributes({
       [ATTR_SERVICE_NAME]: "rollup-processor-demo",
@@ -28,11 +34,8 @@ export function initializeTelemetry(honeycombApiKey: string): void {
     instrumentations: [getNodeAutoInstrumentations()],
   });
 
-  try {
-    sdk.start();
-  } catch (e) {
-    console.error(e);
-  }
+  sdk.start();
+  console.log("OpenTelemetry initialized");
 }
 
 export function setRollupEnabled(enabled: boolean): void {
