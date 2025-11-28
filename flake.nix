@@ -25,6 +25,7 @@
           buildInputs = [
             podman
             podman-compose
+            gnumake
           ];
           shellHook = ''
             export PODMAN_COMPOSE_WARNING_LOGS=false
