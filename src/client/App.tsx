@@ -2,7 +2,7 @@ import { useState } from "react";
 
 export default function App() {
   const [apiKey, setApiKey] = useState(
-    "hcaik_01kb4shmm46y2fjy15fqkg9k1mwg1wzvbw4fecgcwsrjk4dvzw3ccc8jyb",
+    "",
   );
   const [enableRollup, setEnableRollup] = useState(true);
   const [configured, setConfigured] = useState(false);
@@ -79,19 +79,8 @@ export default function App() {
           />
         </div>
 
-        <div style={{ marginBottom: "1rem" }}>
-          <label>
-            <input
-              type="checkbox"
-              checked={enableRollup}
-              onChange={(e) => setEnableRollup(e.target.checked)}
-            />{" "}
-            Enable Rollup Processor
-          </label>
-        </div>
-
         <button onClick={handleConfigure} style={{ padding: "0.5rem 1rem" }}>
-          Configure
+          Set API key
         </button>
 
         {configured && (
@@ -131,6 +120,17 @@ export default function App() {
             max="1000"
             style={{ width: "100%", padding: "0.5rem" }}
           />
+        </div>
+
+        <div style={{ marginBottom: "1rem" }}>
+          <label>
+            <input
+              type="checkbox"
+              checked={enableRollup}
+              onChange={(e) => setEnableRollup(e.target.checked)}
+            />{" "}
+            Enable Rollup Processor
+          </label>
         </div>
 
         <button

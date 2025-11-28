@@ -1,26 +1,29 @@
-.PHONY: dev build clean container-build container-run container-dev
+.PHONY: up down clean shell logs deps
 
-dev:
-	pnpm run dev & pnpm run server
+COMPOSE := podman compose
 
-build:
-	pnpm run build
+deps:
+	@mkdir -p node_modules .pnpm-store
+	$(COMPOSE) run --rm app sh -c 'pnpm install --frozen-lockfile || pnpm install'
 
-server:
-	pnpm exec tsx src/server/index.ts
+up: deps
+	$(COMPOSE) up -d
+	@echo "Services started:"
+	@echo "  Frontend: http://localhost:5173"
+	@echo "  Backend:  http://localhost:3001"
+	@echo ""
+	@echo "Use 'make logs' to view output"
+
+down:
+	$(COMPOSE) down
 
 clean:
-	rm -rf node_modules dist
+	$(COMPOSE) down -v
+	podman rmi rollupspanprocessor_app 2>/dev/null || true
+	rm -rf node_modules .pnpm-store
 
-container-build:
-	podman build -t span-rollup-demo .
+shell:
+	$(COMPOSE) exec app sh
 
-container-run:
-	podman run -it --rm \
-		-p 3000:3000 \
-		-p 3001:3001 \
-		-v $(PWD):/app:z \
-		-e HONEYCOMB_API_KEY=$(HONEYCOMB_API_KEY) \
-		span-rollup-demo
-
-container-dev: container-build container-run
+logs:
+	$(COMPOSE) logs -f app

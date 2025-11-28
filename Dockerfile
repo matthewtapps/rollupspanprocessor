@@ -2,13 +2,15 @@ FROM node:24-alpine
 
 WORKDIR /app
 
-RUN apk add --no-cache make
+RUN corepack enable
 
-COPY package.json pnpm-lock.yaml ./
-RUN corepack enable && pnpm install
+VOLUME [ "/app/.pnpm-store", "/app/node_modules" ]
 
-COPY . .
+# Set pnpm store location
+RUN pnpm config --global set store-dir /app/.pnpm-store
 
-EXPOSE 3000 3001
+COPY package.json pnpm-lock.yaml* ./
 
-CMD ["make", "dev"]
+EXPOSE 5173 3001
+
+CMD ["sh", "-c", "pnpm run dev & pnpm run server & wait"]
